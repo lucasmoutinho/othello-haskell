@@ -1,6 +1,6 @@
 import qualified Data.Map
 
-type Cell = [Char]
+data Cell = Empty | Black | White deriving(Eq, Show)
 type Position = (Int,Int)
 
 createTable :: Cell -> [(Position,Cell)]
