@@ -5,6 +5,12 @@ data Piece = Empty | Black | White deriving(Eq, Show)
 type Position = (Int,Int)
 type Cell = (Position, Piece)
 type Board = Map.Map Position Piece
+type Direction = Position
+type Movement = (Position,Direction)
+type ValidMovement = [Bool] -- para cada uma das 8 direções [(1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)]
+
+possibleDirections :: [(Direction)]
+possibleDirections = [(1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)]
 
 -- Cria tabuleiro com peças vazias
 createTable :: Piece -> [Cell]
@@ -31,25 +37,37 @@ isValidPosition (x,y) = if x < 0 || x > 7 then
                             True
 
 -- Soma duas chaves de posição
-addDirection :: Position -> Position -> Position
-addDirection (a,b) (x,y) = (a+x, b+y)
+addDirection :: Movement -> Position
+addDirection ((a,b),(x,y)) = (a+x, b+y)
 
 -- Checa se na direção existe um movimento válido
-isValidDirection :: Position -> Position -> Piece -> Board -> Bool
-isValidDirection move_position direction color board = if isValidPosition move_position then do
-                                                        let new_direction = (addDirection move_position direction)
-                                                            value = (board Map.! move_position)
-                                                        if value == color then
-                                                            True
-                                                        else
-                                                            if value == Empty then
-                                                                False
+isValidDirection :: Movement -> Piece -> Board -> Bool
+isValidDirection (move_position, direction) color board = if isValidPosition (addDirection (move_position, direction)) then do
+                                                            let new_move = addDirection (move_position, direction)
+                                                                value = (board Map.! new_move)
+                                                            if value == color then
+                                                                True
                                                             else
-                                                                isValidDirection (new_direction) (direction) (color) (board)
-                                                    else 
-                                                        False
+                                                                if value == Empty then
+                                                                    False
+                                                                else
+                                                                    isValidDirection (new_move, direction) color board
+                                                        else False
 
--- isValidMovement :: 
+-- Checa se tem a possibilidade de movimento naquela direção
+isPossibleDirection :: Movement -> Piece -> Board -> Bool
+isPossibleDirection movement color board = if isValidPosition (addDirection movement) then do
+                                            let value = (board Map.! (addDirection movement))
+                                            if value == color then
+                                                False
+                                            else
+                                                True
+                                        else
+                                            False
+
+-- Checa se existe algum movimento valido na posicao escolhida pelo jogador
+isValidMovement :: Position -> Piece -> Board -> ValidMovement
+isValidMovement position color board = map (\move -> if (isPossibleDirection move color board) then (isValidDirection move color board) else False ) (map (\possible_direction -> (position,possible_direction)) possibleDirections)
 
 -- Troca uma posição vazia por uma peça preta
 setBlack :: Position -> Board -> Board 
