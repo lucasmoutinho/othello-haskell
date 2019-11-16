@@ -1,3 +1,4 @@
+import Data.List
 import qualified Data.Map as Map -- Importa a estrutura de dados Map que consiste de (key, value)
 
 data Piece = Empty | Black | White deriving(Eq, Show)
@@ -27,3 +28,15 @@ setWhite pos board = if board Map.! pos == Empty then
                         Map.union (Map.fromList [(pos,White)]) (board)
                     else
                         board
+
+-- Imprime a string correta para cada peça
+printPiece :: Piece -> [Char] 
+printPiece piece =
+    case piece of
+    Empty -> " "
+    White -> "O"
+    Black -> "X"
+
+-- Imprime uma linha do tabuleiro
+printRow :: Int -> Board -> [Char]
+printRow row_number board = show row_number ++ " |" ++ (intercalate "|" (map (\pos -> printPiece (board Map.! pos)) ([(row_number,x) | x <- [0..7]]))) ++ "|"
