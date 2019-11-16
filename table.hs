@@ -40,3 +40,7 @@ printPiece piece =
 -- Imprime uma linha do tabuleiro
 printRow :: Int -> Board -> [Char]
 printRow row_number board = show row_number ++ " |" ++ (intercalate "|" (map (\pos -> printPiece (board Map.! pos)) ([(row_number,x) | x <- [0..7]]))) ++ "|"
+
+-- Imprime o tabuleiro do jogo (deve ser passado para um putStr)
+printBoard :: Board -> [Char]
+printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n"
