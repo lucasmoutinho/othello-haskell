@@ -22,6 +22,21 @@ setBlack pos board = if board Map.! pos == Empty then
                     else
                         board
 
+-- Retorna a cor oposta do jogador da vez
+oppositeColor :: Piece -> Piece
+oppositeColor piece =
+    case piece of
+        White -> Black
+        Black -> White 
+        Empty -> Empty
+
+-- Checa se a posição escolhida é valida
+isValidPosition :: Position -> Bool
+isValidPosition (x,y) = if x < 0 || x > 7 then
+                            False
+                        else
+                            True
+
 -- Troca uma posição vazia por uma peça branca
 setWhite :: Position -> Board -> Board 
 setWhite pos board = if board Map.! pos == Empty then
@@ -33,9 +48,9 @@ setWhite pos board = if board Map.! pos == Empty then
 printPiece :: Piece -> [Char] 
 printPiece piece =
     case piece of
-    Empty -> " "
-    White -> "O"
-    Black -> "X"
+        Empty -> " "
+        White -> "O"
+        Black -> "X"
 
 -- Imprime uma linha do tabuleiro
 printRow :: Int -> Board -> [Char]
