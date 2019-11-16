@@ -20,3 +20,10 @@ setBlack pos board = if board Map.! pos == Empty then
                         Map.union (Map.fromList [(pos,Black)]) (board)
                     else
                         board
+
+-- Troca uma posição vazia por uma peça branca
+setWhite :: Position -> Board -> Board 
+setWhite pos board = if board Map.! pos == Empty then
+                        Map.union (Map.fromList [(pos,White)]) (board)
+                    else
+                        board
