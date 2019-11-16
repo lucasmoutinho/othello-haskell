@@ -15,13 +15,6 @@ createTable z = [((x,y),z) | x <- [0..7] , y <- [0..7]]
 initializeBoard :: Board
 initializeBoard = Map.union (Map.fromList [((3, 3), White), ((4, 4), White), ((3, 4), Black), ((4, 3), Black)]) (Map.fromList (createTable Empty))
 
--- Troca uma posição vazia por uma peça preta
-setBlack :: Position -> Board -> Board 
-setBlack pos board = if board Map.! pos == Empty then
-                        Map.union (Map.fromList [(pos,Black)]) (board)
-                    else
-                        board
-
 -- Retorna a cor oposta do jogador da vez
 oppositeColor :: Piece -> Piece
 oppositeColor piece =
@@ -36,6 +29,34 @@ isValidPosition (x,y) = if x < 0 || x > 7 then
                             False
                         else
                             True
+
+-- Soma duas chaves de posição
+addDirection :: Position -> Position -> Position
+addDirection (a,b) (x,y) = (a+x, b+y)
+
+-- Checa se na direção existe um movimento válido
+isValidDirection :: Position -> Position -> Piece -> Board -> Bool
+isValidDirection move_position direction color board = if isValidPosition move_position then do
+                                                        let new_direction = (addDirection move_position direction)
+                                                            value = (board Map.! move_position)
+                                                        if value == color then
+                                                            True
+                                                        else
+                                                            if value == Empty then
+                                                                False
+                                                            else
+                                                                isValidDirection (new_direction) (direction) (color) (board)
+                                                    else 
+                                                        False
+
+-- isValidMovement :: 
+
+-- Troca uma posição vazia por uma peça preta
+setBlack :: Position -> Board -> Board 
+setBlack pos board = if board Map.! pos == Empty then
+                        Map.union (Map.fromList [(pos,Black)]) (board)
+                    else
+                        board
 
 -- Troca uma posição vazia por uma peça branca
 setWhite :: Position -> Board -> Board 
