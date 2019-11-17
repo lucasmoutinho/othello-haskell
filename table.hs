@@ -87,24 +87,41 @@ isAvailablePosition position color board = if (board Map.! position) == Empty th
 availablePositions :: Piece -> Board -> [Position]
 availablePositions color board = concat (map (\position -> (isAvailablePosition position color board)) (Map.keys board) )
 
--- Troca uma posição vazia por uma peça preta e inverte as peças do adversario na direção correta
--- changePieces :: Position -> Piece -> Board -> Board 
--- changePieces pos color board = if 
---                             if board Map.! pos == Empty then
---                                 Map.union (Map.fromList [(pos,Black)]) (board)
---                             else
---                                 board
-
--- Realiza uma jogada. Procura direções em que a jogada terá efeito
-makeMove :: Position -> Piece -> Board -> [[Direction]]
-makeMove pos color board = (concat (zipWith (\i valid -> if valid then [possibleDirections!!i] else []) [0..] (isValidMovement pos color board)))
-
--- Troca uma posição vazia por uma peça branca
-setWhite :: Position -> Board -> Board 
-setWhite pos board = if board Map.! pos == Empty then
-                        Map.union (Map.fromList [(pos,White)]) (board)
+-- Troca uma posição vazia por uma peça
+setColor :: Position -> Piece -> Board -> Board 
+setColor pos color board = if board Map.! pos == Empty then
+                        Map.union (Map.fromList [(pos,color)]) (board)
                     else
                         board
+
+-- Inverte as cores do adversario
+changePieces :: Position -> Direction -> Piece -> Board -> Board 
+changePieces pos dir color board = if isValidPosition (addDirection (pos,dir)) then do
+                                        let new_move = (addDirection (pos,dir))
+                                            value = (board Map.! new_move)
+                                        if value == color then
+                                            board
+                                        else
+                                            let newboard = (Map.union (Map.fromList [(new_move,color)]) (board)) -- muda a cor
+                                            in changePieces new_move dir color newboard
+                                    else board
+
+-- Troca as peças do tabuleiro. Troca uma posição vazia por uma peça preta e inverte as peças do adversario nas direções corretas
+setAndChangePieces :: Position -> [Direction] -> Piece -> Board -> Board
+setAndChangePieces pos possible_direction color board = if possible_direction /= [] then
+                                                            let newboard = (changePieces pos (head possible_direction) color board)
+                                                            in setAndChangePieces pos (tail possible_direction) color newboard
+                                                        else
+                                                            (setColor pos color board)
+
+-- cria uma lista com todas as direções em que o movimento feito irá inverter as peças do adversario
+createAvailableDirection :: Position -> Piece -> Board -> [Direction]
+createAvailableDirection pos color board = (concat (zipWith (\i valid -> if valid then [possibleDirections!!i] else []) [0..] (isValidMovement pos color board)))
+
+-- Realiza uma jogada. Procura direções em que a jogada terá efeito e chama a função que altera as peças do tabuleiro
+makeMove :: Position -> Piece -> Board -> Board
+makeMove pos color board = let possible_direction = createAvailableDirection pos color board
+                            in setAndChangePieces pos possible_direction color board
 
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
@@ -123,4 +140,4 @@ printBoard :: Board -> [Char]
 printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n\n"
 
 printAvailablePositions:: Piece -> Board -> [Char]
-printAvailablePositions color board = "Possíveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
+printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
