@@ -4,15 +4,15 @@ An onthello game implemented in haskell with MinMax
 ## Executando
 Existem dois modos de jogo: 1P vs PC (othello.hs) e 1P vs 2P (othello_2P.hs)
 
-Para jogar execute o seguinte command line:
-'''
+Para jogar execute a seguinte command line no terminal:
+```
 ghci othello || ghci othello_2P
-'''
+```
 
-No interpretador eecute o seguinte comando:
-'''
+No interpretador execute o seguinte comando:
+```
 main
-'''
+```
 
 ## Informações adicionais
 
