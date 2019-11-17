@@ -136,6 +136,11 @@ piecesScore color board = sum (map (\(_, value) -> scorePerPiece value) (Map.toL
                                 | (x == Empty) = 0
                                 | otherwise = -1
 
+positionsScore :: Piece -> Board -> Int
+positionsScore color board = scorePerPosition color board - scorePerPosition (oppositeColor color) board
+                                where
+                                    scorePerPosition color board = length $ availablePositions color board
+
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
 printPiece piece =
@@ -158,7 +163,7 @@ printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show
 
 -- Imprime corretamente o score da partida
 printCurrentScore :: Board -> [Char]
-printCurrentScore board = "Vantagem atual -- Brancas: " ++ (show (piecesScore White board)) ++ " -- Pretas: " ++ (show (piecesScore Black board)) ++ "\n\n"  
+printCurrentScore board = "Vantagem de peças atual -- Brancas: " ++ (show (piecesScore White board)) ++ " -- Pretas: " ++ (show (piecesScore Black board)) ++ "\nVantagem de posicoes atual -- Brancas: "  ++ (show (positionsScore White board)) ++ " -- Pretas: " ++ (show (positionsScore Black board)) ++ "\n\n"
 
 userMovement color board = do 
     let endGame = availablePositions color board == [] && availablePositions (oppositeColor color) board == []
