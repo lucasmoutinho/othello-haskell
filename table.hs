@@ -65,7 +65,7 @@ isPossibleDirection movement color board = if isValidPosition (addDirection move
                                         else
                                             False
 
--- Checa se existe algum movimento valido na posicao escolhida pelo jogador
+-- Checa se existe algum movimento valido na posicao escolhida pelo jogador e retorna um array de booleanos informando se o movimento é valido em cada direção
 isValidMovement :: Position -> Piece -> Board -> ValidMovement
 isValidMovement position color board = map (\move -> if (isPossibleDirection move color board) then (isValidDirection move color board) else False ) (map (\possible_direction -> (position,possible_direction)) possibleDirections)
 
@@ -87,12 +87,17 @@ isAvailablePosition position color board = if (board Map.! position) == Empty th
 availablePositions :: Piece -> Board -> [Position]
 availablePositions color board = concat (map (\position -> (isAvailablePosition position color board)) (Map.keys board) )
 
--- Troca uma posição vazia por uma peça preta
-setBlack :: Position -> Board -> Board 
-setBlack pos board = if board Map.! pos == Empty then
-                        Map.union (Map.fromList [(pos,Black)]) (board)
-                    else
-                        board
+-- Troca uma posição vazia por uma peça preta e inverte as peças do adversario na direção correta
+-- changePieces :: Position -> Piece -> Board -> Board 
+-- changePieces pos color board = if 
+--                             if board Map.! pos == Empty then
+--                                 Map.union (Map.fromList [(pos,Black)]) (board)
+--                             else
+--                                 board
+
+-- Realiza uma jogada. Procura direções em que a jogada terá efeito
+makeMove :: Position -> Piece -> Board -> [[Direction]]
+makeMove pos color board = (concat (zipWith (\i valid -> if valid then [possibleDirections!!i] else []) [0..] (isValidMovement pos color board)))
 
 -- Troca uma posição vazia por uma peça branca
 setWhite :: Position -> Board -> Board 
