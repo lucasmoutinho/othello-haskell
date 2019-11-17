@@ -31,7 +31,7 @@ oppositeColor piece =
 
 -- Checa se a posição escolhida é valida
 isValidPosition :: Position -> Bool
-isValidPosition (x,y) = if x < 0 || x > 7 then
+isValidPosition (x,y) = if x < 0 || x > 7 || y < 0 || y > 7 then
                             False
                         else
                             True
@@ -68,6 +68,24 @@ isPossibleDirection movement color board = if isValidPosition (addDirection move
 -- Checa se existe algum movimento valido na posicao escolhida pelo jogador
 isValidMovement :: Position -> Piece -> Board -> ValidMovement
 isValidMovement position color board = map (\move -> if (isPossibleDirection move color board) then (isValidDirection move color board) else False ) (map (\possible_direction -> (position,possible_direction)) possibleDirections)
+
+-- Array de movimento inválido
+invalidMove :: ValidMovement
+invalidMove = take 8 (cycle [False])
+
+-- Retorna a posição caso exista algum movimento possível nela
+isAvailablePosition :: Position -> Piece -> Board -> [Position]
+isAvailablePosition position color board = if (board Map.! position) == Empty then do
+                                                if ((isValidMovement position color board) == invalidMove) then
+                                                    []
+                                                else
+                                                    [position]
+                                            else
+                                                []
+
+-- Retorna uma lista com posições para movimentos válidos
+availablePositions :: Piece -> Board -> [Position]
+availablePositions color board = concat (map (\position -> (isAvailablePosition position color board)) (Map.keys board) )
 
 -- Troca uma posição vazia por uma peça preta
 setBlack :: Position -> Board -> Board 
