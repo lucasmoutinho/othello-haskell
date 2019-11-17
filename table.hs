@@ -115,4 +115,7 @@ printRow row_number board = show row_number ++ " |" ++ (intercalate "|" (map (\p
 
 -- Imprime o tabuleiro do jogo (deve ser passado para um putStr)
 printBoard :: Board -> [Char]
-printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n"
+printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n\n"
+
+printAvailablePositions:: Piece -> Board -> [Char]
+printAvailablePositions color board = "Possíveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
