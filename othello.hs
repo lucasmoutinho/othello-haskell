@@ -127,6 +127,15 @@ makeMove pos color board = let possible_direction = createAvailableDirection pos
 isLegalChoice :: Position -> [Position] -> Bool
 isLegalChoice pos possible_positions = (pos `elem` possible_positions)
 
+-- Numero de pecas que um jogador possui mais que outro
+piecesScore :: Piece -> Board -> Int
+piecesScore color board = sum (map (\(_, value) -> scorePerPiece value) (Map.toList board))
+                        where 
+                            scorePerPiece x
+                                | (x == color) = 1
+                                | (x == Empty) = 0
+                                | otherwise = -1
+
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
 printPiece piece =
@@ -143,18 +152,34 @@ printRow row_number board = show row_number ++ " |" ++ (intercalate "|" (map (\p
 printBoard :: Board -> [Char]
 printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n\n"
 
-printAvailablePositions:: Piece -> Board -> [Char]
+-- Imprime as posições disponíveis para a próxima jogada
+printAvailablePositions :: Piece -> Board -> [Char]
 printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
+
+-- Imprime corretamente o score da partida
+printCurrentScore :: Board -> [Char]
+printCurrentScore board = "Vantagem atual -- Brancas: " ++ (show (piecesScore White board)) ++ " -- Pretas: " ++ (show (piecesScore Black board)) ++ "\n\n"  
 
 userMovement color board = do 
     let endGame = availablePositions color board == [] && availablePositions (oppositeColor color) board == []
     if endGame then do
         let printable_board = printBoard board
         putStr printable_board
+        let score_print = printCurrentScore board
+        putStr score_print
         putStr "O jogo acabou, nenhum movimento possível para ambos os lados\n"
+        if (piecesScore White board > 0) then do
+            putStr "Parabéns, você ganhou\n"
+        else do
+            if (piecesScore White board == 0) then do
+                putStr "Empate!\n"
+            else do
+                putStr "Voce perdeu, 0.0\n"
     else do
         let printable_board = printBoard board
         putStr printable_board
+        let score_print = printCurrentScore board
+        putStr score_print
         let available_pos_print = printAvailablePositions color board
         putStr available_pos_print
         let available_positions = availablePositions color board
