@@ -65,7 +65,7 @@ isPossibleDirection movement color board = if isValidPosition (addDirection move
                                         else
                                             False
 
--- Checa se existe algum movimento valido na posicao escolhida pelo jogador
+-- Checa se existe algum movimento valido na posicao escolhida pelo jogador e retorna um array de booleanos informando se o movimento é valido em cada direção
 isValidMovement :: Position -> Piece -> Board -> ValidMovement
 isValidMovement position color board = map (\move -> if (isPossibleDirection move color board) then (isValidDirection move color board) else False ) (map (\possible_direction -> (position,possible_direction)) possibleDirections)
 
@@ -87,19 +87,45 @@ isAvailablePosition position color board = if (board Map.! position) == Empty th
 availablePositions :: Piece -> Board -> [Position]
 availablePositions color board = concat (map (\position -> (isAvailablePosition position color board)) (Map.keys board) )
 
--- Troca uma posição vazia por uma peça preta
-setBlack :: Position -> Board -> Board 
-setBlack pos board = if board Map.! pos == Empty then
-                        Map.union (Map.fromList [(pos,Black)]) (board)
+-- Troca uma posição vazia por uma peça
+setColor :: Position -> Piece -> Board -> Board 
+setColor pos color board = if board Map.! pos == Empty then
+                        Map.union (Map.fromList [(pos,color)]) (board)
                     else
                         board
 
--- Troca uma posição vazia por uma peça branca
-setWhite :: Position -> Board -> Board 
-setWhite pos board = if board Map.! pos == Empty then
-                        Map.union (Map.fromList [(pos,White)]) (board)
-                    else
-                        board
+-- Inverte as cores do adversario
+changePieces :: Position -> Direction -> Piece -> Board -> Board 
+changePieces pos dir color board = if isValidPosition (addDirection (pos,dir)) then do
+                                        let new_move = (addDirection (pos,dir))
+                                            value = (board Map.! new_move)
+                                        if value == color then
+                                            board
+                                        else
+                                            let newboard = (Map.union (Map.fromList [(new_move,color)]) (board)) -- muda a cor
+                                            in changePieces new_move dir color newboard
+                                    else board
+
+-- Troca as peças do tabuleiro. Troca uma posição vazia por uma peça preta e inverte as peças do adversario nas direções corretas
+setAndChangePieces :: Position -> [Direction] -> Piece -> Board -> Board
+setAndChangePieces pos possible_direction color board = if possible_direction /= [] then
+                                                            let newboard = (changePieces pos (head possible_direction) color board)
+                                                            in setAndChangePieces pos (tail possible_direction) color newboard
+                                                        else
+                                                            (setColor pos color board)
+
+-- cria uma lista com todas as direções em que o movimento feito irá inverter as peças do adversario
+createAvailableDirection :: Position -> Piece -> Board -> [Direction]
+createAvailableDirection pos color board = (concat (zipWith (\i valid -> if valid then [possibleDirections!!i] else []) [0..] (isValidMovement pos color board)))
+
+-- Realiza uma jogada. Procura direções em que a jogada terá efeito e chama a função que altera as peças do tabuleiro
+makeMove :: Position -> Piece -> Board -> Board
+makeMove pos color board = let possible_direction = createAvailableDirection pos color board
+                            in setAndChangePieces pos possible_direction color board
+
+-- Verifica se a escolha é válida
+isLegalChoice :: Position -> [Position] -> Bool
+isLegalChoice pos possible_positions = (pos `elem` possible_positions)
 
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
@@ -115,4 +141,34 @@ printRow row_number board = show row_number ++ " |" ++ (intercalate "|" (map (\p
 
 -- Imprime o tabuleiro do jogo (deve ser passado para um putStr)
 printBoard :: Board -> [Char]
-printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n"
+printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n" ++ (intercalate "\n" (map (\y -> printRow y board) [0..7])) ++ "\n\n"
+
+printAvailablePositions:: Piece -> Board -> [Char]
+printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
+
+userMovement color board = do 
+    let endGame = availablePositions color board == [] && availablePositions (oppositeColor color) board == []
+    if endGame then do
+        let printable_board = printBoard board
+        putStr printable_board
+        putStr "O jogo acabou, nenhum movimento possível para ambos os lados\n"
+    else do
+        let printable_board = printBoard board
+        putStr printable_board
+        let available_pos_print = printAvailablePositions color board
+        putStr available_pos_print
+        let available_positions = availablePositions color board
+        if available_positions == [] then do
+            putStr "Nenhum movimento possivel, perca a vez\n"
+            userMovement (oppositeColor color) board
+        else do
+            putStr "Escolha um movimento: \n"
+            position <- readLn
+            if (isLegalChoice position available_positions) then do
+                let new_board = makeMove position color board
+                userMovement (oppositeColor color) new_board
+            else do
+                putStr "Posicao invalida\n"
+                userMovement color board
+
+main = do userMovement White initializeBoard
