@@ -123,6 +123,10 @@ makeMove :: Position -> Piece -> Board -> Board
 makeMove pos color board = let possible_direction = createAvailableDirection pos color board
                             in setAndChangePieces pos possible_direction color board
 
+-- Verifica se a escolha é válida
+isLegalChoice :: Position -> [Position] -> Bool
+isLegalChoice pos possible_positions = (pos `elem` possible_positions)
+
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
 printPiece piece =
@@ -141,3 +145,30 @@ printBoard board = "   " ++ (intercalate " " (map (\x -> show x) [0..7])) ++ "\n
 
 printAvailablePositions:: Piece -> Board -> [Char]
 printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show color ++ ": " ++ (intercalate " " (map (\y -> show y) (availablePositions color board))) ++ "\n"
+
+userMovement color board = do 
+    let endGame = availablePositions color board == [] && availablePositions (oppositeColor color) board == []
+    if endGame then do
+        let printable_board = printBoard board
+        putStr printable_board
+        putStr "O jogo acabou, nenhum movimento possível para ambos os lados\n"
+    else do
+        let printable_board = printBoard board
+        putStr printable_board
+        let available_pos_print = printAvailablePositions color board
+        putStr available_pos_print
+        let available_positions = availablePositions color board
+        if available_positions == [] then do
+            putStr "Nenhum movimento possivel, perca a vez\n"
+            userMovement (oppositeColor color) board
+        else do
+            putStr "Escolha um movimento: \n"
+            position <- readLn
+            if (isLegalChoice position available_positions) then do
+                let new_board = makeMove position color board
+                userMovement (oppositeColor color) new_board
+            else do
+                putStr "Posicao invalida\n"
+                userMovement color board
+
+main = do userMovement White initializeBoard
