@@ -243,7 +243,7 @@ userMovement color board = do
         else do
             -- Opcoes do computador
             putStr ("Computador está escolhendo a jogada... 0.0\n")
-            let best_choice = bestPosition (minMax 4) color board
+            let best_choice = bestPosition (minMax 3) color board
             let new_board = makeMove best_choice color board
             putStr ("Coordenada (x,y) escolhida pelo computador: " ++ show best_choice ++ "   :) tee hee" ++ "\nPressione enter para continuar...\n")
             hSetBuffering stdin NoBuffering
