@@ -1,4 +1,6 @@
 import Data.List
+import Data.Maybe
+import System.IO
 import qualified Data.Map as Map -- Importa a estrutura de dados Map que consiste de (key, value)
 
 data Piece = Empty | Black | White deriving(Eq, Show)
@@ -142,6 +144,28 @@ positionsScore color board = scorePerPosition color board - scorePerPosition (op
                                 where
                                     scorePerPosition color board = length $ availablePositions color board
 
+-- Valor numerico que indica a vantagem de um jogador para o outro. Utilizado na lógica do minmax
+advantageScore :: Piece -> Board -> Int
+advantageScore color board = piecesScore color board + 10 * positionsScore color board
+
+-- Funcao que calcula o minmax para uma posicao. Recebe um valor (depth) de quantas posicoes a frente do tabuleiro ira enxergar.
+minMax :: Int -> Piece -> Board -> Int
+minMax depth color board
+    | gameOver = if piecesScore color board > 0 then 1000000 else -1000000 -- Se a partida acaba com o pc ganhando, retorna um valor imenso
+    | depth <= 0 = advantageScore color board -- chegou no final da árvore, retorna o valor recursivamente
+    | otherwise = if nextColor /= color then (- maxAdvantageForNextColor) else (maxAdvantageForNextColor) -- recursivamente encontra o mixmax pela arvore
+    where
+        opponentMoves = availablePositions (oppositeColor color) board
+        playerMoves = availablePositions color board
+        gameOver = playerMoves == [] && opponentMoves == []
+        nextColor = if opponentMoves /= [] then oppositeColor color else color
+        movesForNextColor = if nextColor /= color then opponentMoves else playerMoves
+        maxAdvantageForNextColor = maximum (map (\position -> minMax (depth-1) nextColor (makeMove position nextColor board)) movesForNextColor)
+
+-- Retorna a melhor posição de acordo com a função de mixmax. Calcula-se o minmax para cada posição do vetor de posições disponíveis
+bestPosition :: (Piece -> Board -> Int) -> Piece -> Board -> Position
+bestPosition minmaxfunction color board = (\(key, _) -> key) (maximumBy (\(_, value_a) (_, value_b) -> compare value_a value_b) (map (\position -> (position, minmaxfunction color (makeMove position color board))) (availablePositions color board)))
+
 -- Imprime a string correta para cada peça
 printPiece :: Piece -> [Char] 
 printPiece piece =
@@ -166,6 +190,13 @@ printAvailablePositions color board = "Possiveis movimentos para a cor " ++ show
 printCurrentScore :: Board -> [Char]
 printCurrentScore board = "Vantagem de peças atual -- Brancas: " ++ (show (piecesScore White board)) ++ " -- Pretas: " ++ (show (piecesScore Black board)) ++ "\nVantagem de posicoes atual -- Brancas: "  ++ (show (positionsScore White board)) ++ " -- Pretas: " ++ (show (positionsScore Black board)) ++ "\n\n"
 
+-- Aguarde pelo usuario pressionar enter
+ifReadyDo :: Handle -> IO a -> IO (Maybe a)
+ifReadyDo hnd x = hReady hnd >>= f
+    where 
+        f True = x >>= return . Just
+        f _ = return Nothing
+
 userMovement color board = do 
     putStr "\n"
     let endGame = availablePositions color board == [] && availablePositions (oppositeColor color) board == []
@@ -183,7 +214,8 @@ userMovement color board = do
             else do
                 putStr "Voce perdeu, 0.0\n"
     else do
-        putStr ("Jogador do turno: " ++ show color ++ "\n\n")
+        putStr ("Jogador do turno: " ++ show color)
+        if color == White then putStr("-- Sua vez de jogar\n\n") else putStr("-- Vez do computador\n\n")
         let printable_board = printBoard board
         putStr printable_board
         let score_print = printCurrentScore board
@@ -191,18 +223,33 @@ userMovement color board = do
         let available_pos_print = printAvailablePositions color board
         putStr available_pos_print
         let available_positions = availablePositions color board
-        if available_positions == [] then do
-            putStr "Nenhum movimento possivel, perca a vez\n"
-            userMovement (oppositeColor color) board
-        else do
-            putStr "Escolha uma coordenada (x,y): "
-            position <- readLn
-            if (isLegalChoice position available_positions) then do
-                let new_board = makeMove position color board
-                userMovement (oppositeColor color) new_board
+        if color == White then do
+            -- Opcoes do jogador
+            if available_positions == [] then do
+                putStr "Nenhum movimento possivel, perca a vez\nPressione enter para continuar...\n"
+                hSetBuffering stdin NoBuffering
+                x <- getChar
+                putStrLn ("Enter" ++ [x])
+                userMovement (oppositeColor color) board
             else do
-                putStr "Posicao invalida\n"
-                userMovement color board
+                putStr "Escolha uma coordenada (x,y): "
+                position <- readLn
+                if (isLegalChoice position available_positions) then do
+                    let new_board = makeMove position color board
+                    userMovement (oppositeColor color) new_board
+                else do
+                    putStr "Posicao invalida\n"
+                    userMovement color board
+        else do
+            -- Opcoes do computador
+            putStr ("Computador está escolhendo a jogada... 0.0\n")
+            let best_choice = bestPosition (minMax 4) color board
+            let new_board = makeMove best_choice color board
+            putStr ("Coordenada (x,y) escolhida pelo computador: " ++ show best_choice ++ "   :) tee hee" ++ "\nPressione enter para continuar...\n")
+            hSetBuffering stdin NoBuffering
+            x <- getChar
+            putStrLn ("Enter" ++ [x])
+            userMovement (oppositeColor color) new_board
 
 main = do 
         putStr "\n\n\n--- Bem vindo ao jogo Othello! ---\nPeças brancas comecam\n\n\n"

@@ -23,6 +23,8 @@ A cada rodada o programa:
 3. Pede que o jogador aperte enter
 4. Imprime o tabuleiro após a jogada do computador, indicado as coordenadas escolhidas;
 
+Observação: O mixmax está realizando a recursão em 4 níveis da árvore. Portanto, dependendo da jogada, o computador pode passar mais de um minuto para dar uma resposta. Para fins didáticos a nossa IA tem o seguinte rosto (0.0)
+
 ### Developers
 - Lucas Moutinho
 - Fernanda Macedo
